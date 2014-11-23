@@ -1,5 +1,4 @@
-README
-######
+# README
 
 This repo contains my solution to the following programming challenge:
 
