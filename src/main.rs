@@ -1,3 +1,7 @@
+//! Solver for Arrows and Arrows Reddit Daily Programmer challenge.
+//!
+//! **See**: [Original Link](http://www.reddit.com/r/dailyprogrammer/comments/2m82yz/20141114_challenge_188_hard_arrows_and_arrows/)
+
 use std::io::{File, BufferedReader};
 use std::os;
 use std::collections::HashMap;
@@ -11,11 +15,22 @@ fn step(pos: uint, delta: int, dimension: uint) -> uint {
     }
 }
 
+/// An expression of direction in 2-space
 #[deriving(Show, Clone)]
-enum Direction {Up, Down, Left, Right}
+pub enum Direction {
+    /// North; expressed by `^`
+    Up, 
+    /// South; expressed by `v`
+    Down, 
+    /// West; expressed by `<`
+    Left, 
+    ///  East; expressed by `>`
+    Right
+}
 
 impl Direction {
-    fn from_glyph(c: char) -> Direction {
+    /// Creates a new `Direction` from a symbol.
+    pub fn from_glyph(c: char) -> Direction {
         match c {
             '^'   => Direction::Up,
             'v'   => Direction::Down,
@@ -25,7 +40,8 @@ impl Direction {
         }
     }
 
-    fn to_glyph(&self) -> char {
+    /// Gets the symbolic representation of this `Direction`
+    pub fn to_glyph(&self) -> char {
         match *self {
             Direction::Up    => '^',
             Direction::Down  => 'v',
@@ -35,15 +51,19 @@ impl Direction {
     }
 }
 
+/// Representation of the input graph and purported bounds.
 #[deriving(Show)]
-struct GraphMeta {
-    width: uint,
-    height: uint,
-    pointers: Vec<Vec<Direction>>
+pub struct GraphMeta {
+    pub width: uint,
+    pub height: uint,
+    /// the representation of directional pointers between nodes in the graph;
+    /// expressed in row-major order
+    pub pointers: Vec<Vec<Direction>>
 }
 
 impl GraphMeta {
-    fn from_input_file(fname: &str) -> GraphMeta {
+    /// Creates a new `GraphMeta` from a file at the path *fname*.
+    pub fn from_input_file(fname: &str) -> GraphMeta {
         let path = Path::new(fname);
         let mut file = BufferedReader::new(File::open(&path));
         let file_lines: Vec<String> = file.lines().map(|x| x.unwrap()).collect();
@@ -77,7 +97,11 @@ impl GraphMeta {
         GraphMeta { width: width, height: height, pointers: pointers }
     }
     
-    fn get_cycle_from(&self, x: uint, y: uint) -> Cycle {
+    /// Finds a `Cycle` rooted at the point given by (*x*, *y*). 
+    ///
+    /// (*x*, *y*) need not be a part of the returned `Cycle`, it may simply be u
+    /// a *prelude* to a cycle.
+    pub fn get_cycle_from(&self, x: uint, y: uint) -> Cycle {
         if x >= self.width || y >= self.height {
             panic!("x or y position out of bounds.");
         }
@@ -110,12 +134,17 @@ impl GraphMeta {
         let cycle_start = *node_coords.get(&(cur_x, cur_y)).unwrap();
         if cycle_start != 0u {
             // case: a prelude exists; trim it off
-            std::vec::as_vec(cycle.slice_from_or_fail(&cycle_start)).deref().clone()
+            std::vec::as_vec(cycle.slice_from_or_fail(&cycle_start)).deref()
+                .clone()
         } else {
             cycle
         }
     }
 
+    /// Returns the `Cycle` of maximum length present. 
+    ///
+    /// Ties are broken in favor of Cycles rooted by a position in the graph
+    /// closer to (*0*, *0*).
     fn get_max_cycle(&self) -> Cycle {
         let mut max_length = 0u;
         let mut max_cycle: Cycle = Vec::new();
@@ -133,15 +162,18 @@ impl GraphMeta {
     }
 }
 
+/// Representation of a single position in the input graph.
 #[deriving(Show, Clone)]
-struct Node {
-    x: uint,
-    y: uint,
-    pointer: Direction,
+pub struct Node {
+    pub x: uint,
+    pub y: uint,
+    pub pointer: Direction,
 }
 
-type Cycle = Vec<Node>;
+/// Representation of a cycle in the input graph.
+pub type Cycle = Vec<Node>;
 
+/// Prints a textual representation of a cycle to *stdout*.
 fn print_cycle(cycle: &Cycle, meta: &GraphMeta) {
     let mut lines = Vec::new();
     for _ in range(0, meta.height) {
